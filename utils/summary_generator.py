@@ -123,6 +123,17 @@ def generate_gpt4_summary_streaming(summary, character_description, trash_talk_l
         if hasattr(chunk.choices[0].delta, 'content'):
             yield chunk.choices[0].delta.content
 
+# In the main function or where you are calling generate_gpt4_summary_streaming
+full_response = ""
+
+# Streaming the response and concatenating the chunks
+for chunk in generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
+    if chunk:  # Ensure chunk is not None before concatenating
+        full_response += chunk
+
+# Now `full_response` will contain the complete response text
+
+
 
 def generate_espn_summary(league, cw):
     """
