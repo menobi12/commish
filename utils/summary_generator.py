@@ -99,19 +99,20 @@ def moderate_text(text):
 
 
 def generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
-    # Create a completion using the OpenAI GPT-4 model
-    response = openai.completions.create(
-        model="gpt-4",  # Specify the model
-        prompt=[
+    # Use the correct method for chat models
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": f"{summary} as {character_description} with a trash talk level of {trash_talk_level}"}
+            {"role": "user", "content": f"Generate a summary: {summary} as {character_description} with trash talk level {trash_talk_level}."}
         ],
-        stream=True  # Enable streaming to get partial responses
+        stream=True  # Enable response streaming
     )
 
-    # Stream the response and yield chunks
+    # Stream the response chunks
     for chunk in response:
-        yield chunk['choices'][0]['message']['content']
+        yield chunk['choices'][0]['delta']['content']  # Access the content from streaming response
+
 
 
 def generate_espn_summary(league, cw):
