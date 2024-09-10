@@ -190,7 +190,7 @@ def main():
 
                 # Fetch open ai key
                 openai_api_key = st.secrets["openai_api_key"]
-                openai.api_key = openai_api_key
+                OpenAI.api_key = openai_api_key
                 LOGGER.debug("Successfully retrieved OpenAI Keys")
 
 
