@@ -102,7 +102,7 @@ def generate_gpt4_summary_streaming(summary, character_description, trash_talk_l
     # Use the correct method for completions
     prompt = f"Generate a summary: {summary} as {character_description} with trash talk level {trash_talk_level}."
     
-    response = openai.Completion.create(
+    response = openai.completions.create(
         model="gpt-4",  # Use the correct model for completion (not chat-based)
         prompt=prompt,  # Use the prompt argument instead of messages
         stream=True  # Enable response streaming
