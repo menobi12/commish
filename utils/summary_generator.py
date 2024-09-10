@@ -135,6 +135,7 @@ for chunk in generate_gpt4_summary_streaming(summary, character_description, tra
 
 
 
+
 def generate_espn_summary(league, cw):
     """
     Generate a human-friendly summary based on the league stats.
