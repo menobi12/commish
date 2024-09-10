@@ -104,26 +104,37 @@ def lowest_scoring_starter_of_week(matchups, players_data, user_team_mapping, ro
 
 
 def highest_scoring_benched_player_of_week(matchups, players_data, user_team_mapping, roster_owner_mapping):
-    highest_score = -1
+    highest_score = float('-inf')  # Initialize with a low score
     highest_scoring_player = None
     highest_scoring_player_team = "Unknown Team"
     
     for matchup in matchups:
-        roster_id = matchup['roster_id']
+        roster_id = matchup.get('roster_id')
+        if roster_id is None:
+            continue  # Skip if 'roster_id' is missing
+        
         owner_id = roster_owner_mapping.get(roster_id)
         team_name = user_team_mapping.get(owner_id, "Unknown Team")
         
-        for player_id, score in matchup['players_points'].items():
-            if player_id not in matchup['starters'] and score > highest_score:
+        # Ensure 'starters' exists and is not None
+        starters = matchup.get('starters')
+        if starters is None:
+            print(f"Warning: 'starters' is None in matchup: {matchup}")
+            continue  # Skip this matchup if starters is missing
+        
+        # Check benched players by iterating over all players
+        for player_id, score in matchup.get('players_points', {}).items():
+            if player_id not in starters and score > highest_score:
                 highest_score = score
                 highest_scoring_player = player_id
                 highest_scoring_player_team = team_name
-                
+    
     if highest_scoring_player and highest_scoring_player in players_data:
         player_name = players_data[highest_scoring_player].get('full_name', 'Unknown Player')
         return player_name, highest_score, highest_scoring_player_team
     else:
         return None, None, "Unknown Team"
+
 
     
 def biggest_blowout_match_of_week(scoreboards):
