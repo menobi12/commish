@@ -100,7 +100,7 @@ def moderate_text(text):
 
 def generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
     # API call using openai.ChatCompletion (assuming you're using the Chat API)
-    response = openai.ChatCompletion.create(
+    response = openai.completions.create()(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
