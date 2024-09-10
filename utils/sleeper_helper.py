@@ -68,22 +68,33 @@ def highest_scoring_player_of_week(matchups, players_data, user_team_mapping, ro
         return None, None, "Unknown Team"
 
 def lowest_scoring_starter_of_week(matchups, players_data, user_team_mapping, roster_owner_mapping):
-    lowest_score = float('inf')
+    lowest_score = float('inf')  # Initialize with a high score to compare
     lowest_scoring_player = None
     lowest_scoring_player_team = "Unknown Team"
     
     for matchup in matchups:
-        roster_id = matchup['roster_id']
+        # Ensure matchup contains 'roster_id' and it's valid
+        roster_id = matchup.get('roster_id')
+        if roster_id is None:
+            continue  # Skip this matchup if 'roster_id' is missing
+        
         owner_id = roster_owner_mapping.get(roster_id)
         team_name = user_team_mapping.get(owner_id, "Unknown Team")
         
-        for player_id in matchup['starters']:
-            score = matchup['players_points'].get(player_id, 0)
-            if score < lowest_score:
-                lowest_score = score
-                lowest_scoring_player = player_id
-                lowest_scoring_player_team = team_name
-                
+        # Ensure 'starters' exists and is not None
+        if 'starters' in matchup and matchup['starters']:
+            for player_id in matchup['starters']:
+                # Get player score or default to 0 if not found
+                score = matchup.get('players_points', {}).get(player_id, 0)
+                if score < lowest_score:
+                    lowest_score = score
+                    lowest_scoring_player = player_id
+                    lowest_scoring_player_team = team_name
+        else:
+            # Log or handle missing starters
+            print(f"Warning: 'starters' not found or None in matchup: {matchup}")
+    
+    # After checking all matchups, return the result
     if lowest_scoring_player and lowest_scoring_player in players_data:
         player_name = players_data[lowest_scoring_player].get('full_name', 'Unknown Player')
         return player_name, lowest_score, lowest_scoring_player_team
