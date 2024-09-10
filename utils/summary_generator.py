@@ -3,6 +3,10 @@ from yfpy.query import YahooFantasySportsQuery
 from sleeper_wrapper import League as SleeperLeague
 from utils import espn_helper, yahoo_helper, sleeper_helper, helper
 import openai
+from openai import OpenAI
+
+# Initialize the OpenAI client
+client = OpenAI()
 import datetime
 import streamlit as st
 from streamlit.logger import get_logger
@@ -98,10 +102,7 @@ def moderate_text(text):
 # Lateny troubleshooting: https://platform.openai.com/docs/guides/production-best-practices/improving-latencies
 
 
-from openai import OpenAI
 
-# Initialize the OpenAI client
-client = OpenAI()
 
 def generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
     # Build the prompt using the provided inputs
