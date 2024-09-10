@@ -1,5 +1,5 @@
 import streamlit as st
-# from openai import OpenAI
+import openai  # Ensure OpenAI is imported correctly
 from openai import OpenAI
 from streamlit.logger import get_logger
 from utils import summary_generator
@@ -15,13 +15,15 @@ import shutil
 
 LOGGER = get_logger(__name__)
 
-
 st.set_page_config(
     page_title="Commish.ai",
     page_icon="🏈",
     layout="centered",
     initial_sidebar_state="expanded"
 )
+
+# Set the OpenAI API key globally using Streamlit secrets
+openai.api_key = st.secrets["openai_api_key"]
 
 def main():
     st.write("""
