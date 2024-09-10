@@ -102,7 +102,7 @@ def generate_gpt4_summary_streaming(summary, character_description, trash_talk_l
     # Create a completion using the OpenAI GPT-4 model
     response = openai.completions.create(
         model="gpt-4o",  # Specify the model
-        messages=[
+        prompt=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": f"{summary} as {character_description} with a trash talk level of {trash_talk_level}"}
         ],
