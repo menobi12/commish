@@ -104,35 +104,52 @@ def moderate_text(text):
 
 
 def generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
-    # Build the prompt using the provided inputs
+    # Log the input parameters to check if they are valid
+    print(f"Summary: {summary}, Character Description: {character_description}, Trash Talk Level: {trash_talk_level}")
+
     messages = [
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": f"Generate a summary: {summary} as {character_description} with trash talk level {trash_talk_level}."}
     ]
 
-    # Make the API call using the new client interface
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",  # Use the correct model variant
-        messages=messages,  # Messages should be a list for the chat model
-        stream=True  # Enable streaming to get partial results
-    )
+    try:
+        # Make the API call using the new client interface
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # Use the correct model variant
+            messages=messages,  # Messages should be a list for the chat model
+            stream=True  # Enable streaming to get partial results
+        )
 
-    # Stream the response and yield the chunks
-    for chunk in response:
-        # Access the text content from streaming chunks using dot notation
-        if hasattr(chunk.choices[0].delta, 'content'):
-            yield chunk.choices[0].delta.content
+        # Stream the response and yield the chunks
+        for chunk in response:
+            # Access the text content from streaming chunks using dot notation
+            if hasattr(chunk.choices[0].delta, 'content'):
+                yield chunk.choices[0].delta.content
+            else:
+                # Log if content is missing
+                print("No content found in chunk.")
 
-# In the main function or where you are calling generate_gpt4_summary_streaming
-full_response = ""
+    except Exception as e:
+        # Log any exceptions that occur during the API call
+        print(f"An error occurred: {str(e)}")
 
-# Streaming the response and concatenating the chunks
-for chunk in generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
-    if chunk:  # Ensure chunk is not None before concatenating
-        full_response += chunk
 
-# Now `full_response` will contain the complete response text
+# In the app.py or main script where you're calling this function
+try:
+    full_response = ""
 
+    # Streaming the response and concatenating the chunks
+    for chunk in generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
+        if chunk:  # Ensure chunk is not None before concatenating
+            full_response += chunk
+        else:
+            print("Received an empty chunk")
+
+    print(f"Final Response: {full_response}")
+
+except Exception as e:
+    # Log the error
+    print(f"Error in main function: {str(e)}")
 
 
 
