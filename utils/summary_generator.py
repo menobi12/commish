@@ -99,9 +99,9 @@ def moderate_text(text):
 
 
 def generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
-    # Use the updated and optimized model variant
+    # Ensure we're passing the correct arguments to ChatCompletion
     response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",  # Use gpt-4-turbo to avoid 'out of date' issues
+        model="gpt-4-turbo",  # Use gpt-4-turbo or a valid model
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": f"Generate a summary: {summary} as {character_description} with trash talk level {trash_talk_level}."}
@@ -111,7 +111,8 @@ def generate_gpt4_summary_streaming(summary, character_description, trash_talk_l
 
     # Stream the response chunks
     for chunk in response:
-        yield chunk['choices'][0]['delta'].get('content', '')  # Access the content from streaming response
+        yield chunk['choices'][0]['delta'].get('content', '')  # Access the content from the streaming response
+
 
 
 
