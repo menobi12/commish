@@ -2,8 +2,7 @@ from espn_api.football import League
 from yfpy.query import YahooFantasySportsQuery
 from sleeper_wrapper import League as SleeperLeague
 from utils import espn_helper, yahoo_helper, sleeper_helper, helper
-# from openai import OpenAI
-from openai import OpenAI
+import openai
 import datetime
 import streamlit as st
 from streamlit.logger import get_logger
@@ -99,44 +98,22 @@ def moderate_text(text):
 # Lateny troubleshooting: https://platform.openai.com/docs/guides/production-best-practices/improving-latencies
 
 
-def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level):
-    # Construct the instruction for GPT-4 based on user inputs
-    instruction = f"You will be provided a summary below containing the most recent weekly stats for a fantasy football league. \
-    Create a weekly recap in the style of {character_choice}. Do not simply repeat every single stat verbatim - be creative while calling out stats and being on theme. You should include trash talk with a level of {trash_talk_level} based on a scale of 1-10 (1 being no trash talk, 10 being excessive hardcore trash talk); feel free to make fun of (or praise) team names and performances, and add a touch of humor related to the chosen character. \
-    Keep your summary concise enough (under 800 characters) as to not overwhelm the user with stats but still engaging, funny, thematic, and insightful. You can sprinkle in a few emojis if they are thematic. Only respond in character and do not reply with anything other than your recap. Begin by introducing \
-    your character. Here is the provided weekly fantasy summary: {summary}"
-
-    # Create the messages array
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": instruction}
-    ]
+def generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
+    # API call using openai.ChatCompletion (assuming you're using the Chat API)
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": summary + " as " + character_description + " with a trash talk level of " + str(trash_talk_level)},
+        ],
+        stream=True  # Enable streaming
+    )
     
-    # Create OpenAI client instance
-    client = OpenAI()
-
-    try:
-        # Send the messages to OpenAI's GPT-4 for analysis
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Use the appropriate model like gpt-4o-mini or gpt-4o
-            messages=messages,
-            max_tokens=800,  # Control response length
-            stream=True
-        )
-        
-        # Extract and return the GPT-4 generated message
-        for chunk in response:
-            if 'content' in chunk.choices[0].message:
-                yield chunk.choices[0].message['content']
-            else:
-                print("End of stream or unexpected structure detected.")
-                break
-    except Exception as e:
-        print("Error details:", e)
-        return "Failed to get response from GPT-4"
+    # Stream the response back to the app
+    for chunk in response:
+        yield chunk['choices'][0]['delta']['content']
 
 
-# @st.cache_data(ttl=3600) - Cannot hash argument 'league'
 def generate_espn_summary(league, cw):
     """
     Generate a human-friendly summary based on the league stats.
