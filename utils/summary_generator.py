@@ -98,23 +98,28 @@ def moderate_text(text):
 # Lateny troubleshooting: https://platform.openai.com/docs/guides/production-best-practices/improving-latencies
 
 
+from openai import OpenAI
+
+# Initialize the OpenAI client
+client = OpenAI()
+
 def generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
-    # Use the correct method for completions
-    prompt = f"Generate a summary: {summary} as {character_description} with trash talk level {trash_talk_level}."
-    
-    response = openai.Completion.create(
-        model="gpt-4",  # Use the correct model for completion (not chat-based)
-        prompt=prompt,  # Use the prompt argument instead of messages
-        stream=True  # Enable response streaming
+    # Build the prompt using the provided inputs
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": f"Generate a summary: {summary} as {character_description} with trash talk level {trash_talk_level}."}
+    ]
+
+    # Make the API call using the new client interface
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",  # Use the correct model variant
+        messages=messages,  # Messages should be a list for the chat model
+        stream=True  # Enable streaming to get partial results
     )
 
-    # Stream the response chunks
+    # Stream the response and yield the chunks
     for chunk in response:
-        yield chunk['choices'][0]['text']  # Access the content from the streaming response
-
-
-
-
+        yield chunk['choices'][0]['delta'].get('content', '')  # Extract the text content from streaming chunks
 
 
 def generate_espn_summary(league, cw):
