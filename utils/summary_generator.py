@@ -119,7 +119,9 @@ def generate_gpt4_summary_streaming(summary, character_description, trash_talk_l
 
     # Stream the response and yield the chunks
     for chunk in response:
-        yield chunk['choices'][0]['delta'].get('content', '')  # Extract the text content from streaming chunks
+        # Access the text content from streaming chunks using dot notation
+        if hasattr(chunk.choices[0].delta, 'content'):
+            yield chunk.choices[0].delta.content
 
 
 def generate_espn_summary(league, cw):
