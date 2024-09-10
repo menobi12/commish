@@ -6,7 +6,7 @@ import openai
 from openai import OpenAI
 
 # Initialize the OpenAI client
-client = OpenAI(api_key= "sk-rv_gHvP3P84pVZ8KnKhj0k09g1iUQjlMdkGR0j0q4AT3B1bkFJdcN_fNSW xBSn-HihP3_nkVeB15VDXuFQqquwPimRwA"
+client = OpenAI(api_key= "sk- rv_gHvP3P84pVZ8KnKhj@k09g1iUQjlMdkGR0j0q4AT3B1bkFJdcN_fNSw xBSn-HihP3_nkVeB15VDXuFQqquwPimRwA")
 import streamlit as st
 from streamlit.logger import get_logger
 LOGGER = get_logger(__name__)
