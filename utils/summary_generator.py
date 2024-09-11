@@ -44,14 +44,16 @@ def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level)
         )
         
         for chunk in response:
-            if 'content' in chunk.choices[0].delta:
+            # Check if content exists in chunk
+            if 'choices' in chunk and 'content' in chunk.choices[0].delta:
                 yield chunk.choices[0].delta['content']
             else:
-                print("End of stream or unexpected structure detected.")
+                LOGGER.error("Unexpected chunk structure or empty response")
                 break
     except Exception as e:
-        print("Error details:", e)
+        LOGGER.error(f"Error while generating GPT-4 summary: {str(e)}")
         return "Failed to get response from GPT-4"
+
         
 @st.cache_data(ttl=3600)
 def generate_sleeper_summary(league_id):
