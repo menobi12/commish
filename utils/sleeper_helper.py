@@ -51,11 +51,12 @@ def highest_scoring_player_of_week(matchups, players_data, user_team_mapping, ro
     highest_scoring_player_team = "Unknown Team"
     
     for matchup in matchups:
+        print(f"Debug Matchup: {matchup}")  # Log the matchup structure
         roster_id = matchup['roster_id']
         owner_id = roster_owner_mapping.get(roster_id)
         team_name = user_team_mapping.get(owner_id, "Unknown Team")
         
-        for player_id, score in matchup['players_points'].items():
+        for player_id, score in matchup.get('players_points', {}).items():
             if score > highest_score:
                 highest_score = score
                 highest_scoring_player = player_id
@@ -200,10 +201,13 @@ def team_on_hottest_streak(rosters, user_team_mapping, roster_owner_mapping):
 def calculate_scoreboards(matchups, user_team_mapping, roster_owner_mapping):
     matchups_dict = {}
     for matchup in matchups:
-        roster_id = matchup['roster_id']
+        # Log the full matchup structure for debugging
+        print(f"Debug Matchup: {matchup}")
+        
+        roster_id = matchup.get('roster_id')
         owner_id = roster_owner_mapping.get(roster_id)
         team_name = user_team_mapping.get(owner_id, "Unknown Team")
-        total_points = matchup.get('points', 0)
+        total_points = matchup.get('points', 0)  # Check if points exist
         matchup_id = matchup.get('matchup_id')
         
         if matchup_id not in matchups_dict:
@@ -215,6 +219,7 @@ def calculate_scoreboards(matchups, user_team_mapping, roster_owner_mapping):
         matchups_dict[key] = sorted(matchups_dict[key], key=lambda x: -x[1])
     
     return matchups_dict
+
 
 
 
