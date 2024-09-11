@@ -5,6 +5,7 @@ from yfpy.query import YahooFantasySportsQuery
 from sleeper_wrapper import League as SleeperLeague
 from utils import espn_helper, yahoo_helper, sleeper_helper, helper
 import openai  # Update: Use openai package directly
+import logging
 import datetime  # Fix: Missing import
 import streamlit as st
 from streamlit.logger import get_logger
@@ -26,6 +27,8 @@ def moderate_text(text):
         print(f"An error occurred: {str(e)}")
         return False  # Assume text is inappropriate in case of an error
 
+LOGGER = logging.getLogger(__name__)
+
 def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level):
     instruction = f"You will be provided a summary below containing the most recent weekly stats for a fantasy football league. Create a weekly recap in the style of {character_choice}. You should include trash talk with a level of {trash_talk_level}. Here is the provided weekly fantasy summary: {summary}"
 
@@ -35,21 +38,22 @@ def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level)
     ]
 
     try:
-        # Use openai.ChatCompletion for streaming
-        response = openai.ChatCompletion.create(
+        # Updated to the new API call format
+        response = openai.completions.create(
             model="gpt-4",  # Ensure correct model is used
             messages=messages,
             max_tokens=800,  # Control response length
             stream=True
         )
         
+        # Processing the stream response
         for chunk in response:
-            # Check if content exists in chunk
-            if 'choices' in chunk and 'content' in chunk.choices[0].delta:
-                yield chunk.choices[0].delta['content']
+            if chunk.get('choices') and chunk['choices'][0].get('delta', {}).get('content'):
+                yield chunk['choices'][0]['delta']['content']
             else:
                 LOGGER.error("Unexpected chunk structure or empty response")
                 break
+
     except Exception as e:
         LOGGER.error(f"Error while generating GPT-4 summary: {str(e)}")
         return "Failed to get response from GPT-4"
