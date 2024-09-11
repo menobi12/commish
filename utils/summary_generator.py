@@ -1,41 +1,20 @@
+# summary_generator.py
+
 from espn_api.football import League
 from yfpy.query import YahooFantasySportsQuery
 from sleeper_wrapper import League as SleeperLeague
 from utils import espn_helper, yahoo_helper, sleeper_helper, helper
-import openai
-from openai import OpenAI
-
-# Initialize the OpenAI client
-client = OpenAI(api_key= "sk-svcacct-HKkYTZX3Tnf4afyeELdJabwPJyWP1YiRfAuBTg9mLKtbDbf2bkVePdG-MIJTT3BlbkFJyZwlp8EFoId2KvPoVhnQpX-mV8AY65nlLScNUbO2piVMmYbQQ3MrK5PlLxIA")
+import openai  # Update: Use openai package directly
+import datetime  # Fix: Missing import
 import streamlit as st
 from streamlit.logger import get_logger
+
 LOGGER = get_logger(__name__)
-
-# def moderate_text(openai_api_key, text):
-#     # Instantiate a client with the API key
-#     client = OpenAI(api_key=openai_api_key)
-
-#     try:
-#         # Send the text to OpenAI's Moderation API
-#         response = client.moderations.create(input=text)
-
-#         # Access the result and determine if the text is flagged
-#         result = response.results[0]
-#         return not result.flagged  # return True if text is ok, False if it's inappropriate
-#     except Exception as e:
-#         print(f"An error occurred: {str(e)}")
-#         return False  # Assume text is inappropriate in case of an error
-
 
 def moderate_text(text):
     try:
-        # Create OpenAI client instance
-        client = OpenAI()
-
-        # Send the moderation request
-        response = client.moderations.create(
-            input=text
-        )
+        # Use the openai package directly
+        response = openai.Moderation.create(input=text)
         
         # Extract the first result
         result = response['results'][0]
@@ -47,109 +26,75 @@ def moderate_text(text):
         print(f"An error occurred: {str(e)}")
         return False  # Assume text is inappropriate in case of an error
 
-# def generate_gpt4_summary_streaming(openai_api_key, summary, character_choice, trash_talk_level):
-#     # Instantiate a client with the API key
-#     client = OpenAI(api_key=openai_api_key)
-
-#     # Construct the instruction for GPT-4 based on user inputs
-#     instruction = f"You will be provided a summary below containing the most recent weekly stats for a fantasy football league. \
-#     Create a weekly recap in the style of {character_choice}. Do not simply repeat every single stat verbatim - be creative while calling out stats and being on theme. You should include trash talk with a level of {trash_talk_level} based on a scale of 1-10 (1 being no trash talk, 10 being excessive hardcore trash talk); feel free to make fun of (or praise) team names and performances, and add a touch of humor related to the chosen character. \
-#     Keep your summary concise enough (under 800 characters) as to not overwhelm the user with stats but still engaging, funny, thematic, and insightful. You can sprinkle in a few emojis if they are thematic. Only respond in character and do not reply with anything other than your recap. Begin by introducing \
-#     your character. Here is the provided weekly fantasy summary: {summary}"
-
-#     # instruction_test = "How do I output all files in a directory using Python?"
-
-#     # Create the messages array
-#     messages = [
-#         {"role": "system", "content": "You are a helpful assistant."},
-#         {"role": "user", "content": instruction}
-#     ]
-
-#     LOGGER.debug("__GPT4__FUNCTION SENDING MESSAGES TO GPT")
-
-#     try:
-#         # Send the messages to OpenAI's GPT-4 for analysis
-#         response = client.chat.completions.create(
-#             model="gpt-4", #options: gpt-4, gpt-3.5-turbo, gpt-4-1106-preview
-#             messages=messages,
-#             max_tokens=800,  # Control response length
-#             stream=True
-#         )
-
-
-#         # Extract and return the GPT-4 generated message
-#         LOGGER.debug("__GPT4__FUNCTION MESSAGES SENT SUCCESSFULLY TO GPT. RETREVIEING RESPONSE...")
-#         for chunk in response:
-#             LOGGER.debug(f"Received chunk: {chunk}")
-#             if not chunk.choices:
-#                 LOGGER.debug("No choices in chunk")
-#                 continue
-#             content = chunk.choices[0].delta.content
-#             if content:
-#                 yield content
-#             else:
-#                 LOGGER.debug("End of stream or unexpected structure detected.")  # Additional logging
-#                 print("End of stream or unexpected structure detected.")
-#                 break
-#         LOGGER.debug("__GPT4__FUNCTION RESPONSE SUCCESSFULLY RECIEVED.")
-#     except Exception as e:
-#         LOGGER.error(f"Error in generating summary: {e}", exc_info=True)
-#         return "Failed to get response from GPT-4"
-
-
-
-# Lateny troubleshooting: https://platform.openai.com/docs/guides/production-best-practices/improving-latencies
-
-
-
-
-def generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
-    # Log the input parameters to check if they are valid
-    print(f"Summary: {summary}, Character Description: {character_description}, Trash Talk Level: {trash_talk_level}")
+def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level):
+    instruction = f"You will be provided a summary below containing the most recent weekly stats for a fantasy football league. Create a weekly recap in the style of {character_choice}. You should include trash talk with a level of {trash_talk_level}. Here is the provided weekly fantasy summary: {summary}"
 
     messages = [
         {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": f"Generate a summary: {summary} as {character_description} with trash talk level {trash_talk_level}."}
+        {"role": "user", "content": instruction}
     ]
 
     try:
-        # Make the API call using the new client interface
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Use the correct model variant
-            messages=messages,  # Messages should be a list for the chat model
-            stream=True  # Enable streaming to get partial results
+        # Use openai.ChatCompletion for streaming
+        response = openai.ChatCompletion.create(
+            model="gpt-4",  # Ensure correct model is used
+            messages=messages,
+            max_tokens=800,  # Control response length
+            stream=True
         )
-
-        # Stream the response and yield the chunks
+        
         for chunk in response:
-            # Access the text content from streaming chunks using dot notation
-            if hasattr(chunk.choices[0].delta, 'content'):
-                yield chunk.choices[0].delta.content
+            if 'content' in chunk.choices[0].delta:
+                yield chunk.choices[0].delta['content']
             else:
-                # Log if content is missing
-                print("No content found in chunk.")
-
+                print("End of stream or unexpected structure detected.")
+                break
     except Exception as e:
-        # Log any exceptions that occur during the API call
-        print(f"An error occurred: {str(e)}")
+        print("Error details:", e)
+        return "Failed to get response from GPT-4"
 
+def generate_sleeper_summary(league_id):
+    league = SleeperLeague(league_id)
+    current_date_today = datetime.datetime.now()  # Fix: datetime was not imported
+    week = helper.get_current_week(current_date_today) - 1  # Force to always be the most recent completed week
 
-# In the app.py or main script where you're calling this function
-try:
-    full_response = ""
+    rosters = league.get_rosters()
+    users = league.get_users()
+    matchups = league.get_matchups(week)
+    standings = league.get_standings(rosters, users)
 
-    # Streaming the response and concatenating the chunks
-    for chunk in generate_gpt4_summary_streaming(summary, character_description, trash_talk_level):
-        if chunk:  # Ensure chunk is not None before concatenating
-            full_response += chunk
-        else:
-            print("Received an empty chunk")
+    players_url = "https://raw.githubusercontent.com/jeisey/commish/main/players_data.json"
+    players_data = sleeper_helper.load_player_data(players_url)
 
-    print(f"Final Response: {full_response}")
+    user_team_mapping = league.map_users_to_team_name(users)
+    roster_owner_mapping = league.map_rosterid_to_ownerid(rosters)
 
-except Exception as e:
-    # Log the error
-    print(f"Error in main function: {str(e)}")
+    scoreboards = sleeper_helper.calculate_scoreboards(matchups, user_team_mapping, roster_owner_mapping)
+
+    highest_scoring_team_name, highest_scoring_team_score = sleeper_helper.highest_scoring_team_of_week(scoreboards)
+    top_3_teams_result = sleeper_helper.top_3_teams(standings)
+    highest_scoring_player_week, weekly_score, highest_scoring_player_team_week = sleeper_helper.highest_scoring_player_of_week(matchups, players_data, user_team_mapping, roster_owner_mapping)
+    lowest_scoring_starter, lowest_starter_score, lowest_scoring_starter_team = sleeper_helper.lowest_scoring_starter_of_week(matchups, players_data, user_team_mapping, roster_owner_mapping)
+    highest_scoring_benched_player, highest_benched_score, highest_scoring_benched_player_team = sleeper_helper.highest_scoring_benched_player_of_week(matchups, players_data, user_team_mapping, roster_owner_mapping)
+    blowout_teams, point_differential_blowout = sleeper_helper.biggest_blowout_match_of_week(scoreboards)
+    close_teams, point_differential_close = sleeper_helper.closest_match_of_week(scoreboards)
+    hottest_streak_team, longest_streak = sleeper_helper.team_on_hottest_streak(rosters, user_team_mapping, roster_owner_mapping)
+
+    summary = (
+        f"The highest scoring team of the week: {highest_scoring_team_name} with {round(highest_scoring_team_score, 2)} points\n"
+        f"Standings; Top 3 Teams:\n"
+        f"  1. {top_3_teams_result[0][0]} - {top_3_teams_result[0][3]} points ({top_3_teams_result[0][1]}W-{top_3_teams_result[0][2]}L)\n"
+        f"  2. {top_3_teams_result[1][0]} - {top_3_teams_result[1][3]} points ({top_3_teams_result[1][1]}W-{top_3_teams_result[1][2]}L)\n"
+        f"  3. {top_3_teams_result[2][0]} - {top_3_teams_result[2][3]} points ({top_3_teams_result[2][1]}W-{top_3_teams_result[2][2]}L)\n"
+        f"Highest scoring player of the week: {highest_scoring_player_week} with {weekly_score} points (Team: {highest_scoring_player_team_week})\n"
+        f"Lowest scoring player of the week that started: {lowest_scoring_starter} with {lowest_starter_score} points (Team: {lowest_scoring_starter_team})\n"
+        f"Highest scoring benched player of the week: {highest_scoring_benched_player} with {highest_benched_score} points (Team: {highest_scoring_benched_player_team})\n"
+        f"Biggest blowout match of the week: {blowout_teams[0]} vs {blowout_teams[1]} (Point Differential: {round(point_differential_blowout, 2)})\n"
+        f"Closest match of the week: {close_teams[0]} vs {close_teams[1]} (Point Differential: {round(point_differential_close, 2)})\n"
+        f"Team on the hottest streak: {hottest_streak_team} with a {longest_streak} game win streak"
+    )
+
+    return summary
 
 
 
@@ -272,70 +217,4 @@ def get_yahoo_league_summary(league_id, auth_path):
 
 
 @st.cache_data(ttl=3600)
-def generate_sleeper_summary(league_id):
-    # Initialize the Sleeper API League object
-    league = SleeperLeague(league_id)
-    current_date_today = datetime.datetime.now()
-    week = helper.get_current_week(current_date_today)-1 #force to always be most recent completed week
-    # Get necessary data from the league
-    rosters = league.get_rosters()
-    users = league.get_users()
-    matchups = league.get_matchups(week)
-    standings = league.get_standings(rosters, users)
 
-    # Get weekly players data from public json file
-    players_url = "https://raw.githubusercontent.com/jeisey/commish/main/players_data.json"
-    players_data = sleeper_helper.load_player_data(players_url)
-
-    # Generate mappings
-    user_team_mapping = league.map_users_to_team_name(users)
-    roster_owner_mapping = league.map_rosterid_to_ownerid(rosters)
-    
-    # Generate scoreboards for the week
-    scoreboards = sleeper_helper.calculate_scoreboards(matchups, user_team_mapping, roster_owner_mapping)
-
-    # 1. Highest Scoring Team of the Week
-    highest_scoring_team_name, highest_scoring_team_score = sleeper_helper.highest_scoring_team_of_week(scoreboards)
-
-    # 2. Standings; Top 3 Teams
-    top_3_teams_result = sleeper_helper.top_3_teams(standings)
-    
-    # 3. Highest Scoring Player of the Week
-    highest_scoring_player_week, weekly_score, highest_scoring_player_team_week = sleeper_helper.highest_scoring_player_of_week(matchups, players_data, user_team_mapping, roster_owner_mapping)
-
-    # 4. Lowest Scoring Player of the Week that Started
-    lowest_scoring_starter, lowest_starter_score, lowest_scoring_starter_team = sleeper_helper.lowest_scoring_starter_of_week(matchups, players_data, user_team_mapping, roster_owner_mapping)
-
-    # 5. Highest Scoring Benched Player of the Week
-    highest_scoring_benched_player, highest_benched_score, highest_scoring_benched_player_team = sleeper_helper.highest_scoring_benched_player_of_week(matchups, players_data, user_team_mapping, roster_owner_mapping)
-
-    # 6. Biggest Blowout Match of the Week
-    blowout_teams, point_differential_blowout = sleeper_helper.biggest_blowout_match_of_week(scoreboards)
-
-    # 7. Closest Match of the Week
-    close_teams, point_differential_close = sleeper_helper.closest_match_of_week(scoreboards)
-
-    # 8. Team with Most Moves (this always seems to be zero, UPDATE)
-    # team_most_moves, most_moves = sleeper_helper.team_with_most_moves(rosters, user_team_mapping, roster_owner_mapping)
-    
-    # 9. Team on Hottest Streak
-    hottest_streak_team, longest_streak = sleeper_helper.team_on_hottest_streak(rosters, user_team_mapping, roster_owner_mapping)
-    
-
-    # Construct the summary string
-    summary = (
-        f"The highest scoring team of the week: {highest_scoring_team_name} with {round(highest_scoring_team_score,2)} points\n"
-        f"Standings; Top 3 Teams:\n"
-        f"  1. {top_3_teams_result[0][0]} - {top_3_teams_result[0][3]} points ({top_3_teams_result[0][1]}W-{top_3_teams_result[0][2]}L)\n"
-        f"  2. {top_3_teams_result[1][0]} - {top_3_teams_result[1][3]} points ({top_3_teams_result[1][1]}W-{top_3_teams_result[1][2]}L)\n"
-        f"  3. {top_3_teams_result[2][0]} - {top_3_teams_result[2][3]} points ({top_3_teams_result[2][1]}W-{top_3_teams_result[2][2]}L)\n"
-        f"Highest scoring player of the week: {highest_scoring_player_week} with {weekly_score} points (Team: {highest_scoring_player_team_week})\n"
-        f"Lowest scoring player of the week that started: {lowest_scoring_starter} with {lowest_starter_score} points (Team: {lowest_scoring_starter_team})\n"
-        f"Highest scoring benched player of the week: {highest_scoring_benched_player} with {highest_benched_score} points (Team: {highest_scoring_benched_player_team})\n"
-        f"Biggest blowout match of the week: {blowout_teams[0]} vs {blowout_teams[1]} (Point Differential: {round(point_differential_blowout,2)})\n"
-        f"Closest match of the week: {close_teams[0]} vs {close_teams[1]} (Point Differential: {round(point_differential_close,2)})\n"
-        # f"Team with the most moves: {team_most_moves} with {most_moves} moves\n" #These always seems to be zero
-        f"Team on the hottest streak: {hottest_streak_team} with a {longest_streak} game win streak"
-    )
-    
-    return summary
