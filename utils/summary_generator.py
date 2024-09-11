@@ -52,7 +52,8 @@ def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level)
     except Exception as e:
         print("Error details:", e)
         return "Failed to get response from GPT-4"
-
+        
+@st.cache_data(ttl=3600)
 def generate_sleeper_summary(league_id):
     league = SleeperLeague(league_id)
     current_date_today = datetime.datetime.now()  # Fix: datetime was not imported
@@ -216,5 +217,5 @@ def get_yahoo_league_summary(league_id, auth_path):
     return recap
 
 
-@st.cache_data(ttl=3600)
+
 
