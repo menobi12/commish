@@ -42,7 +42,7 @@ def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level)
 
     try:
         # Correct API call for chat-based models in OpenAI v1.0.0+
-        response = openai.chat(
+        response = openai.chat.completions.create(
             model="gpt-4",  # Ensure correct chat model is used
             messages=messages,
             max_tokens=800,  # Control response length
