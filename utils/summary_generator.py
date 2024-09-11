@@ -51,15 +51,19 @@ def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level)
 
         # Processing the stream response
         for chunk in response:
-            # Log the entire chunk to inspect its structure
+            # Log the chunk to inspect its structure
             LOGGER.debug(f"Received chunk: {chunk}")
 
             # Accessing the content from the streamed chunk correctly
-            if 'choices' in chunk and 'delta' in chunk.choices[0] and 'content' in chunk.choices[0].delta:
-                yield chunk.choices[0].delta['content']
-            else:
-                LOGGER.error("Unexpected chunk structure or empty response")
-                break
+            choices = chunk.choices[0].delta
+            content = choices.get('content', '')
+            
+            # Skip empty chunks
+            if not content:
+                continue  # Wait for actual content
+            
+            # Yield the content if it's available
+            yield content
 
     except Exception as e:
         LOGGER.error(f"Error while generating GPT-4 summary: {str(e)}")
