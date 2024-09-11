@@ -41,8 +41,8 @@ def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level)
     ]
 
     try:
-        # Correct API call for chat-based models (v1/chat/completions)
-        response = openai.ChatCompletion.create(
+        # Correct API call for chat-based models in OpenAI v1.0.0+
+        response = openai.chat(
             model="gpt-4",  # Ensure correct chat model is used
             messages=messages,
             max_tokens=800,  # Control response length
@@ -60,7 +60,6 @@ def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level)
     except Exception as e:
         LOGGER.error(f"Error while generating GPT-4 summary: {str(e)}")
         return "Failed to get response from GPT-4"
-
         
 @st.cache_data(ttl=3600)
 def generate_sleeper_summary(league_id):
