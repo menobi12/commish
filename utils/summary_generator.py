@@ -73,12 +73,17 @@ def generate_sleeper_summary(league_id):
     league = SleeperLeague(league_id)
     current_date_today = datetime.datetime.now()  # Fix: datetime was not imported
     week = helper.get_current_week(current_date_today) - 1  # Force to always be the most recent completed week
-
     rosters = league.get_rosters()
     users = league.get_users()
     matchups = league.get_matchups(week)
+    print(f"Debug: Week {week} Matchups: {matchups}")  # Log matchups to inspect response
     standings = league.get_standings(rosters, users)
 
+    # Check if matchups are returning valid scores and player points
+    if not matchups:
+        print(f"Warning: No matchups data for week {week}.")
+        return "No matchups available."
+    
     players_url = "https://raw.githubusercontent.com/jeisey/commish/main/players_data.json"
     players_data = sleeper_helper.load_player_data(players_url)
 
