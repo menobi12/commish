@@ -30,26 +30,24 @@ def moderate_text(text):
 LOGGER = logging.getLogger(__name__)
 
 def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level):
-    instruction = f"You will be provided a summary below containing the most recent weekly stats for a fantasy football league. Create a weekly recap in the style of {character_choice}. You should include trash talk with a level of {trash_talk_level}. Here is the provided weekly fantasy summary: {summary}"
-
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": instruction}
-    ]
+    # Construct the instruction for GPT-4 based on user inputs
+    instruction = f"You will be provided a summary below containing the most recent weekly stats for a fantasy football league. \
+    Create a weekly recap in the style of {character_choice}. You should include trash talk with a level of {trash_talk_level}. \
+    Here is the provided weekly fantasy summary: {summary}"
 
     try:
-        # Updated to the new API call format
+        # Correct API call with required arguments
         response = openai.completions.create(
-            model="gpt-4",  # Ensure correct model is used
-            messages=messages,
-            max_tokens=800,  # Control response length
-            stream=True
+            model="gpt-4",  # Correct model
+            prompt=instruction,  # Using prompt instead of messages
+            max_tokens=800,  # Limit the token count for brevity
+            stream=True  # Enable streaming
         )
-        
+
         # Processing the stream response
         for chunk in response:
-            if chunk.get('choices') and chunk['choices'][0].get('delta', {}).get('content'):
-                yield chunk['choices'][0]['delta']['content']
+            if chunk.get('choices') and chunk['choices'][0].get('text'):
+                yield chunk['choices'][0]['text']
             else:
                 LOGGER.error("Unexpected chunk structure or empty response")
                 break
