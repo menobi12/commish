@@ -54,10 +54,9 @@ def generate_gpt4_summary_streaming(summary, character_choice, trash_talk_level)
             # Log the chunk to inspect its structure
             LOGGER.debug(f"Received chunk: {chunk}")
 
-            # Accessing the content from the streamed chunk correctly
-            choices = chunk.choices[0].delta
-            content = choices.get('content', '')
-            
+            # Access the content directly without using `.get()`
+            content = chunk.choices[0].delta.content
+
             # Skip empty chunks
             if not content:
                 continue  # Wait for actual content
